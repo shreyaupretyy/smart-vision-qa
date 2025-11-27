@@ -11,8 +11,11 @@ Pillow==10.1.0
 
 # Object Detection
 ultralytics>=8.0.227
+# For GPU (CUDA 12.1): Install with --index-url https://download.pytorch.org/whl/cu121
+# For CPU: Install with default index
 torch>=2.2.0
 torchvision>=0.17.0
+torchaudio>=2.2.0
 
 # Vision-Language Models
 transformers==4.35.2

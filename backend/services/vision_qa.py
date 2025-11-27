@@ -79,7 +79,8 @@ class VisionQA:
         self, 
         image: np.ndarray, 
         question: str,
-        max_length: int = 50
+        max_length: int = 50,
+        include_context: bool = True
     ) -> Tuple[str, float]:
         """
         Answer a question about an image
@@ -88,6 +89,7 @@ class VisionQA:
             image: Input image as numpy array (BGR format)
             question: Question to answer
             max_length: Maximum answer length
+            include_context: Whether to include scene context for more detailed answers
             
         Returns:
             Tuple of (answer, confidence)
@@ -108,6 +110,28 @@ class VisionQA:
             output = self.qa_model.generate(**inputs, max_length=max_length)
         
         answer = self.qa_processor.decode(output[0], skip_special_tokens=True)
+        
+        # Generate more detailed answer by including scene caption
+        if include_context and len(answer.split()) <= 3:
+            try:
+                caption = self.generate_caption(image, max_length=75)
+                # Create a more natural response
+                question_lower = question.lower()
+                
+                if any(word in question_lower for word in ["what is", "what's", "describe", "tell me about", "what am i seeing"]):
+                    answer = f"{caption}. {answer.capitalize()}"
+                elif "who" in question_lower:
+                    answer = f"In this scene, {caption.lower()}. {answer.capitalize()}"
+                elif "where" in question_lower:
+                    answer = f"The scene shows {caption.lower()}. Location: {answer}"
+                elif "when" in question_lower:
+                    answer = f"{caption}. {answer.capitalize()}"
+                elif "why" in question_lower or "how" in question_lower:
+                    answer = f"Based on the scene ({caption.lower()}), {answer.lower()}"
+                else:
+                    answer = f"{caption}. To answer your question: {answer.lower()}"
+            except Exception as e:
+                logger.warning(f"Failed to add context to answer: {e}")
         
         # Get confidence score (simplified)
         confidence = 0.85  # Placeholder - BLIP doesn't directly provide confidence
@@ -203,9 +227,23 @@ class VisionQA:
         answers = [r["answer"] for r in top_results]
         best_answer = max(set(answers), key=answers.count)
         
+        # Create a more comprehensive answer if we have multiple relevant frames
+        if len(top_results) > 1:
+            # Check if answers are similar
+            unique_answers = list(set(answers))
+            if len(unique_answers) == 1:
+                # All frames give the same answer, just use it
+                final_answer = best_answer
+            else:
+                # Different answers from different frames - provide a comprehensive response
+                answer_summary = "; ".join([f"at {r['timestamp']:.1f}s: {r['answer']}" for r in top_results[:3]])
+                final_answer = f"{best_answer}. Throughout the video: {answer_summary}"
+        else:
+            final_answer = best_answer
+        
         return {
             "question": question,
-            "answer": best_answer,
+            "answer": final_answer,
             "confidence": top_results[0]["confidence"] if top_results else 0.0,
             "relevant_frames": [r["frame_number"] for r in top_results],
             "detailed_results": top_results

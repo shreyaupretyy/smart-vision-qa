@@ -2,6 +2,16 @@
 
 An AI-powered system that enables users to upload or stream video content and ask natural language questions about events happening within the video using state-of-the-art multimodal LLMs and computer vision.
 
+## Screenshots
+
+### Video Query Interface
+![Video Query](uploads/Screenshot_1.png)
+*Ask natural language questions about your video content and get detailed AI-powered answers*
+
+### Object Detection
+![Object Detection](uploads/Screenshot_2.png)
+*Real-time object detection and tracking with YOLOv8*
+
 ## Real-World Use Cases
 
 - **Security Teams**: Query surveillance footage for specific events without manual review
