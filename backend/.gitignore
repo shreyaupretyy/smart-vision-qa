@@ -1,0 +1,17 @@
+# ignore logs
+*.log
+logs/
+
+# ignore model weights
+*.pt
+*.pth
+*.onnx
+
+# ignore test videos
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# except sample
+!sample.mp4
