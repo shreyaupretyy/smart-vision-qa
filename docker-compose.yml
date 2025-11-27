@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: smartvisionqa-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./chroma_db:/app/chroma_db
+      - ./temp:/app/temp
+    environment:
+      - DEBUG=True
+      - HOST=0.0.0.0
+      - PORT=8000
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:80
+    restart: unless-stopped
+    networks:
+      - smartvisionqa
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: smartvisionqa-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - smartvisionqa
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartvisionqa-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - smartvisionqa
+
+networks:
+  smartvisionqa:
+    driver: bridge
+
+volumes:
+  uploads:
+  chroma_db:
+  temp:
