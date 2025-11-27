@@ -58,17 +58,21 @@ export default function AnalyzePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 text-primary-400 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-primary-400 animate-spin mx-auto mb-4" />
+          <p className="text-lg text-gray-300">Loading video...</p>
+        </div>
       </div>
     );
   }
 
   if (!metadata) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
         <div className="text-center">
-          <p className="text-xl text-gray-400">Video not found</p>
+          <p className="text-xl text-gray-300 mb-2">Video not found</p>
+          <p className="text-sm text-gray-500">The video may have been deleted or the ID is invalid</p>
         </div>
       </div>
     );
@@ -77,71 +81,90 @@ export default function AnalyzePage() {
   const isProcessing = metadata.status === 'processing' || metadata.status === 'uploading';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Video Info */}
-      <div className="card mb-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-2">{metadata.filename}</h1>
-            <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-              <span>Duration: {metadata.duration.toFixed(1)}s</span>
-              <span>Resolution: {metadata.width}x{metadata.height}</span>
-              <span>FPS: {metadata.fps.toFixed(1)}</span>
-              <span>Frames: {metadata.frame_count}</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Video Info Header */}
+        <div className="bg-gradient-to-r from-gray-900/80 to-gray-800/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 mb-8 p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-purple-400 mb-3">
+                {metadata.filename}
+              </h1>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                  <Clock className="w-4 h-4 text-primary-400" />
+                  <span className="text-gray-300">{metadata.duration.toFixed(1)}s</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                  <Eye className="w-4 h-4 text-primary-400" />
+                  <span className="text-gray-300">{metadata.width}x{metadata.height}</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                  <span className="text-gray-300">{metadata.fps.toFixed(1)} FPS</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                  <span className="text-gray-300">{metadata.frame_count} frames</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                metadata.status === 'ready'
-                  ? 'bg-green-500/20 text-green-400'
-                  : metadata.status === 'processing'
-                  ? 'bg-yellow-500/20 text-yellow-400'
-                  : metadata.status === 'failed'
-                  ? 'bg-red-500/20 text-red-400'
-                  : 'bg-gray-500/20 text-gray-400'
-              }`}
-            >
-              {metadata.status}
-            </span>
+            <div>
+              <span
+                className={`px-4 py-2 rounded-lg text-sm font-semibold shadow-lg ${
+                  metadata.status === 'ready'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                    : metadata.status === 'processing'
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+                    : metadata.status === 'failed'
+                    ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white'
+                    : 'bg-gray-500/20 text-gray-400'
+                }`}
+              >
+                {metadata.status}
+              </span>
+            </div>
           </div>
         </div>
 
         {isProcessing && (
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+          <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-xl p-4 backdrop-blur-sm mt-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
-              <p className="text-yellow-400">
-                Video is being processed. Some features may not be available yet.
-              </p>
+              <Loader2 className="w-5 h-5 text-yellow-400 animate-spin flex-shrink-0" />
+              <div>
+                <p className="text-yellow-400 font-medium">
+                  Processing video with AI models...
+                </p>
+                <p className="text-yellow-400/70 text-sm mt-1">
+                  Frame analysis and caption generation in progress. This may take a few minutes.
+                </p>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-6 mt-8">
         {/* Video Player */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <VideoPlayer videoId={videoId} metadata={metadata} />
         </div>
 
         {/* Analysis Panel */}
         <div className="space-y-6">
           {/* Tabs */}
-          <div className="card">
-            <div className="flex flex-col space-y-2">
+          <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 p-2">
+            <div className="flex flex-col space-y-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   disabled={isProcessing && tab.id !== 'query'}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'bg-primary-600 text-white'
-                      : 'text-gray-400 hover:bg-gray-700'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      ? 'bg-gradient-to-r from-primary-600 to-purple-600 text-white shadow-lg transform scale-[1.02]'
+                      : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
-                  <tab.icon className="w-5 h-5" />
+                  <tab.icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium">{tab.label}</span>
                 </button>
               ))}
@@ -149,7 +172,7 @@ export default function AnalyzePage() {
           </div>
 
           {/* Active Panel */}
-          <div className="card">
+          <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50">
             {activeTab === 'query' && <QueryPanel videoId={videoId} />}
             {activeTab === 'search' && <SearchPanel videoId={videoId} />}
             {activeTab === 'detect' && <DetectionPanel videoId={videoId} />}
@@ -161,3 +184,4 @@ export default function AnalyzePage() {
     </div>
   );
 }
+

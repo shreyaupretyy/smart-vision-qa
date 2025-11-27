@@ -174,20 +174,20 @@ class VisionQA:
         self,
         video_path: str,
         question: str,
-        sample_rate: int = 2,
-        top_k: int = 3
+        sample_rate: int = 5,
+        top_k: int = 8
     ) -> Dict:
         """
-        Query entire video with a question
+        Query entire video with a question using improved multi-frame reasoning
         
         Args:
             video_path: Path to video file
             question: Question to answer
-            sample_rate: Sample 1 frame every N seconds
+            sample_rate: Sample 1 frame every N seconds (increased to 5 for faster processing)
             top_k: Return top K most relevant frames
             
         Returns:
-            Dictionary with answers and relevant frames
+            Dictionary with comprehensive answer and relevant frames
         """
         cap = cv2.VideoCapture(video_path)
         
@@ -196,50 +196,72 @@ class VisionQA:
         
         fps = cap.get(cv2.CAP_PROP_FPS)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = total_frames / fps
         
         frame_results = []
         frame_interval = int(fps * sample_rate)
         
-        for frame_num in range(0, total_frames, frame_interval):
+        # Limit maximum frames to analyze for performance
+        max_frames_to_analyze = min(100, total_frames // frame_interval)
+        
+        logger.info(f"Querying video with question: '{question}'")
+        logger.info(f"Analyzing {max_frames_to_analyze} frames from {duration:.1f}s video")
+        
+        # Sample frames evenly across video
+        frame_indices = [int(i * total_frames / max_frames_to_analyze) 
+                        for i in range(max_frames_to_analyze)]
+        
+        for frame_num in frame_indices:
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
             ret, frame = cap.read()
             
             if not ret:
-                break
+                continue
             
-            answer, confidence = self.answer_question(frame, question)
             timestamp = frame_num / fps
+            
+            # First get caption for scene understanding
+            caption = self.generate_caption(frame, max_length=75)
+            
+            # Get answer with full context
+            answer, confidence = self.answer_question(frame, question, include_context=True)
+            
+            # Calculate better confidence based on answer relevance
+            answer_length = len(answer.split())
+            caption_relevance = self._calculate_relevance(question, caption)
+            # Combine factors: longer answers usually better, caption relevance matters
+            adjusted_confidence = (0.4 * min(1.0, answer_length / 15) + 
+                                 0.6 * caption_relevance)
             
             frame_results.append({
                 "frame_number": frame_num,
                 "timestamp": timestamp,
                 "answer": answer,
-                "confidence": confidence
+                "caption": caption,
+                "confidence": adjusted_confidence
             })
         
         cap.release()
+        
+        if not frame_results:
+            return {
+                "question": question,
+                "answer": "Unable to analyze video frames",
+                "confidence": 0.0,
+                "relevant_frames": [],
+                "detailed_results": []
+            }
         
         # Sort by confidence and get top K
         frame_results.sort(key=lambda x: x["confidence"], reverse=True)
         top_results = frame_results[:top_k]
         
-        # Get most common answer
-        answers = [r["answer"] for r in top_results]
-        best_answer = max(set(answers), key=answers.count)
-        
-        # Create a more comprehensive answer if we have multiple relevant frames
-        if len(top_results) > 1:
-            # Check if answers are similar
-            unique_answers = list(set(answers))
-            if len(unique_answers) == 1:
-                # All frames give the same answer, just use it
-                final_answer = best_answer
-            else:
-                # Different answers from different frames - provide a comprehensive response
-                answer_summary = "; ".join([f"at {r['timestamp']:.1f}s: {r['answer']}" for r in top_results[:3]])
-                final_answer = f"{best_answer}. Throughout the video: {answer_summary}"
-        else:
-            final_answer = best_answer
+        # Synthesize comprehensive answer from multiple frames
+        final_answer = self._synthesize_multi_frame_answer(
+            question, 
+            top_results,
+            total_frames / fps  # video duration
+        )
         
         return {
             "question": question,
@@ -248,6 +270,74 @@ class VisionQA:
             "relevant_frames": [r["frame_number"] for r in top_results],
             "detailed_results": top_results
         }
+    
+    def _synthesize_multi_frame_answer(
+        self,
+        question: str,
+        top_results: List[Dict],
+        video_duration: float
+    ) -> str:
+        """
+        Synthesize a comprehensive answer from multiple frames
+        
+        Args:
+            question: Original question
+            top_results: Top matching frames with answers
+            video_duration: Total video duration in seconds
+            
+        Returns:
+            Synthesized comprehensive answer
+        """
+        if not top_results:
+            return "No relevant information found in the video."
+        
+        # Extract answers and captions
+        answers = [r["answer"] for r in top_results]
+        captions = [r["caption"] for r in top_results]
+        
+        # Get the most detailed answer (longest)
+        best_answer = max(answers, key=len)
+        
+        # Check if answers are consistent
+        unique_answers = []
+        for ans in answers:
+            # Extract key words (simple approach)
+            ans_lower = ans.lower()
+            if not any(ans_lower in existing.lower() or existing.lower() in ans_lower 
+                      for existing in unique_answers):
+                unique_answers.append(ans)
+        
+        # Build comprehensive response
+        if len(unique_answers) == 1:
+            # Consistent answer across frames - add temporal context
+            timestamps = [r["timestamp"] for r in top_results]
+            if len(timestamps) > 1:
+                time_range = f"throughout the video (at {timestamps[0]:.1f}s to {timestamps[-1]:.1f}s)"
+                final_answer = f"{best_answer}\n\nThis is observed {time_range}."
+            else:
+                final_answer = f"{best_answer}\n\nThis occurs at {timestamps[0]:.1f}s in the video."
+        else:
+            # Different observations at different times
+            question_lower = question.lower()
+            
+            if any(word in question_lower for word in ["what happens", "what is happening", "describe", "summary"]):
+                # Build narrative from captions
+                temporal_descriptions = []
+                for i, result in enumerate(top_results[:3]):
+                    temporal_descriptions.append(
+                        f"At {result['timestamp']:.1f}s: {result['caption']}"
+                    )
+                final_answer = f"{best_answer}\n\nTemporal breakdown:\n" + "\n".join(temporal_descriptions)
+            
+            elif "how many" in question_lower or "count" in question_lower:
+                # For counting questions, try to aggregate
+                final_answer = f"{best_answer}\n\nNote: The count may vary across different moments in the video."
+            
+            else:
+                # General case: provide the best answer with context
+                final_answer = f"{best_answer}\n\nMultiple observations found across the video, this represents the most relevant answer."
+        
+        return final_answer
     
     def describe_scene(self, image: np.ndarray) -> Dict:
         """
@@ -278,6 +368,36 @@ class VisionQA:
             "caption": caption,
             "details": details
         }
+    
+    def _calculate_relevance(self, question: str, text: str) -> float:
+        """
+        Calculate simple relevance score between question and text
+        
+        Args:
+            question: Question text
+            text: Text to compare (caption/answer)
+            
+        Returns:
+            Relevance score between 0 and 1
+        """
+        # Simple keyword matching for relevance
+        question_words = set(question.lower().split())
+        text_words = set(text.lower().split())
+        
+        # Remove common stop words
+        stop_words = {"a", "an", "the", "is", "are", "was", "were", "this", "that", 
+                     "what", "how", "when", "where", "who", "which", "do", "does"}
+        question_words -= stop_words
+        text_words -= stop_words
+        
+        if not question_words:
+            return 0.5
+        
+        # Calculate overlap
+        overlap = len(question_words & text_words)
+        relevance = overlap / len(question_words)
+        
+        return min(1.0, relevance + 0.3)  # Boost baseline relevance
     
     def compare_frames(
         self,
