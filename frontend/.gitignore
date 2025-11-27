@@ -1,0 +1,7 @@
+# Frontend specific ignores
+.DS_Store
+*.local
+dist-ssr
+*.tgz
+.vscode/
+coverage/
