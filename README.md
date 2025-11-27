@@ -2,23 +2,23 @@
 
 An AI-powered system that enables users to upload or stream video content and ask natural language questions about events happening within the video using state-of-the-art multimodal LLMs and computer vision.
 
-## 🎯 Real-World Use Cases
+## Real-World Use Cases
 
 - **Security Teams**: Query surveillance footage for specific events without manual review
 - **Teachers**: Review classroom recordings and identify key moments
 - **Content Reviewers**: Quickly analyze video content at scale
 - **Sports Analysts**: Find specific plays and events in game footage
 
-## ✨ Advanced Features
+## Advanced Features
 
-- 🎥 **Real-time Video Frame Processing**: Automatic chunking and CV model analysis
-- 💬 **Multimodal Q&A**: Ask questions like "Who entered the room after the teacher?"
-- 🔍 **Semantic Video Search**: Find moments like "3 people standing near the whiteboard"
-- 📊 **Event Timeline Generation**: AI-powered summarization and clustering
-- 🔒 **Video Redaction**: Automatic face/object blurring
-- 👥 **Collaborative Annotation**: Real-time collaborative mode with WebSocket
+- **Real-time Video Frame Processing**: Automatic chunking and CV model analysis
+- **Multimodal Q&A**: Ask questions like "Who entered the room after the teacher?"
+- **Semantic Video Search**: Find moments like "3 people standing near the whiteboard"
+- **Event Timeline Generation**: AI-powered summarization and clustering
+- **Video Redaction**: Automatic face/object blurring
+- **Collaborative Annotation**: Real-time collaborative mode with WebSocket
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - React with Vite
@@ -39,7 +39,7 @@ An AI-powered system that enables users to upload or stream video content and as
 - Redis for task queuing
 - Local file storage (can extend to AWS S3)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -109,7 +109,7 @@ npm run dev
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 SmartVisionQA/
@@ -147,7 +147,7 @@ SmartVisionQA/
 └── README.md
 ```
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Video Management
 - `POST /api/video/upload` - Upload video file
@@ -169,7 +169,7 @@ SmartVisionQA/
 - `WebSocket /ws/stream` - Real-time video streaming
 - `WebSocket /ws/collaborate` - Collaborative annotation
 
-## 🎨 Features in Detail
+## Features in Detail
 
 ### 1. Video Upload & Processing
 Upload videos in various formats (MP4, AVI, MOV, MKV). The system automatically extracts frames, generates embeddings, and prepares the video for analysis.
@@ -198,7 +198,7 @@ Automatically detect and blur faces or specific objects for privacy protection. 
 ### 7. Collaborative Annotation
 Multiple users can annotate videos in real-time with synchronized cursors and annotations.
 
-## 🧪 Development
+## Development
 
 ### Running Tests
 ```bash
@@ -221,19 +221,19 @@ cd frontend
 npm run lint
 ```
 
-## 📝 License
+## License
 
 MIT License - see LICENSE file for details
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📧 Contact
+## Contact
 
 For questions or support, please open an issue on GitHub.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - YOLOv8 by Ultralytics
 - OpenAI Whisper
@@ -241,7 +241,3 @@ For questions or support, please open an issue on GitHub.
 - ChromaDB
 - FastAPI
 - React & Vite
-
----
-
-Built with ❤️ by the SmartVisionQA team

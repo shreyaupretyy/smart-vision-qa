@@ -91,9 +91,6 @@ export default function Layout({ children }) {
             <p className="mb-2">
               SmartVisionQA - AI-Powered Video Understanding System
             </p>
-            <p className="text-sm">
-              Built with ❤️ using React, FastAPI, YOLOv8, BLIP, and Whisper
-            </p>
           </div>
         </div>
       </footer>
